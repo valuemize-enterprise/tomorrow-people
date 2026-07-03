@@ -1,0 +1,256 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── NextAuth models ──────────────────────────────────────────────
+
+model User {
+  id    String  @id @default(cuid())
+  email String  @unique
+  name  String?
+  image String?
+
+  onboardingAnchor   String?
+  onboardingComplete Boolean @default(false)
+  identityStatement  String?
+  timezone           String  @default("UTC")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // NextAuth
+  accounts Account[]
+  sessions Session[]
+
+  // App relations
+  habits           Habit[]
+  dailyLogs        DailyLog[]
+  accountabilities Accountability[] @relation("UserAccountabilities")
+  partnerships     Accountability[] @relation("PartnerAccountabilities")
+  coachingMessages CoachingMessage[]
+
+  // ← FIX: these two were missing from original schema
+  dailyScores    DailyScore[]
+  journalEntries JournalEntry[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─── Core app models ──────────────────────────────────────────────
+
+model Habit {
+  id     String @id @default(cuid())
+  userId String
+
+  name              String
+  anchorHabit       String
+  minVersion        String
+  attractiveLink    String?
+  cueDescription    String?
+  rewardDescription String?
+
+  stackOrder    Int     @default(0)
+  isActive      Boolean @default(true)
+  frictionScore Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dailyLogs DailyLog[]
+  streak    Streak?
+
+  @@index([userId, isActive])
+  @@index([userId, stackOrder])
+  @@map("habits")
+}
+
+enum LogStatus {
+  DONE
+  PARTIAL
+  SKIPPED
+}
+
+model DailyLog {
+  id      String    @id @default(cuid())
+  habitId String
+  userId  String
+
+  date         DateTime  @db.Date
+  status       LogStatus
+  minutesSpent Int?
+  completedAt  DateTime?
+
+  createdAt DateTime @default(now())
+
+  habit Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, date])
+  @@index([userId, date])
+  @@map("daily_logs")
+}
+
+model Streak {
+  id      String @id @default(cuid())
+  habitId String @unique
+
+  current    Int @default(0)
+  longest    Int @default(0)
+  totalVotes Int @default(0)
+
+  lastUpdated DateTime @default(now())
+
+  habit Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@map("streaks")
+}
+
+enum AccountabilityStatus {
+  PENDING
+  ACTIVE
+  DECLINED
+  ENDED
+}
+
+model Accountability {
+  id        String               @id @default(cuid())
+  userId    String
+  partnerId String
+
+  status AccountabilityStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User @relation("UserAccountabilities",    fields: [userId],    references: [id], onDelete: Cascade)
+  partner User @relation("PartnerAccountabilities", fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, partnerId])
+  @@map("accountability")
+}
+
+// ─── Intelligence models ──────────────────────────────────────────
+
+model DailyScore {
+  id     String   @id @default(cuid())
+  userId String
+  date   DateTime @db.Date
+
+  completionPoints Int @default(0)
+  streakBonus      Int @default(0)
+  journalBonus     Int @default(0)
+  consistencyBonus Int @default(0)
+  total            Int @default(0)
+
+  missedYesterday     Boolean @default(false)
+  consecutiveMissDays Int     @default(0)
+  recoveryTriggered   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("daily_scores")
+}
+
+model JournalEntry {
+  id     String   @id @default(cuid())
+  userId String
+  date   DateTime @db.Date
+
+  promptKey  String
+  promptText String
+  body       String @db.Text
+  mood       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("journal_entries")
+}
+
+// ─── Coaching messages cache ───────────────────────────────────
+// Append this model to schema.prisma and add:
+//   coachingMessages CoachingMessage[] to the User model
+
+model CoachingMessage {
+  id      String   @id @default(cuid())
+  userId  String
+  date    DateTime @db.Date
+  type    CoachingMessageType
+  message String   @db.Text
+  habitId String?
+  modelUsed String @default("claude-sonnet-4-20250514")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, date, habitId], name: "userId_type_date_habitId")
+  @@index([userId, date])
+  @@map("coaching_messages")
+}
+
+enum CoachingMessageType {
+  MORNING
+  RECOVERY
+  MILESTONE_7
+  MILESTONE_21
+  MILESTONE_66
+  REFLECTION
+  ANALYSIS
+  RECOMMENDATION
+}

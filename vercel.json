@@ -1,0 +1,54 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+
+  "framework": "nextjs",
+
+  "buildCommand": "prisma generate && prisma migrate deploy && next build",
+  "installCommand": "npm ci",
+  "outputDirectory": ".next",
+
+  "nodeVersion": "20.x",
+
+  "crons": [
+    {
+      "path":     "/api/cron/midnight",
+      "schedule": "1 0 * * *"
+    },
+    {
+      "path":     "/api/cron/weekly",
+      "schedule": "0 6 * * 6"
+    }
+  ],
+
+  "functions": {
+    "app/api/cron/**": {
+      "maxDuration": 300
+    },
+    "app/api/**": {
+      "maxDuration": 30
+    }
+  },
+
+  "headers": [
+    {
+      "source": "/api/cron/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, max-age=0" }
+      ]
+    }
+  ],
+
+  "rewrites": [
+    {
+      "source": "/healthz",
+      "destination": "/api/health"
+    }
+  ]
+}
