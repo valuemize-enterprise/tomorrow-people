@@ -1,12 +1,11 @@
 import type { Metadata } from "next"
 import "./globals.css"
+import { Providers } from "@/components/providers"
 
 export const metadata: Metadata = {
-  title:       "Tomorrow's People",
+  title: "Tomorrow's People",
   description: "Build the person you're becoming — one habit at a time.",
-  metadataBase: new URL(
-    process.env.NEXTAUTH_URL ?? "http://localhost:3000",
-  ),
+  metadataBase: new URL(process.env.NEXTAUTH_URL ?? "http://localhost:3000"),
 }
 
 export default function RootLayout({
@@ -26,7 +25,9 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="theme-color" content="#fafaf9" />
       </head>
-      <body>{children}</body>
+      <body suppressHydrationWarning>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   )
 }

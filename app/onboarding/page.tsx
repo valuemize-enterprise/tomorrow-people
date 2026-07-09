@@ -1,22 +1,35 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 
 export default function OnboardingPage() {
   const [anchor, setAnchor] = useState("")
   const [saving, setSaving] = useState(false)
   const router = useRouter()
+  const { update } = useSession()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!anchor.trim()) return
     setSaving(true)
-    await fetch("/api/users/me", {
+
+    const res = await fetch("/api/users/me", {
       method: "PATCH",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ onboardingAnchor: anchor, onboardingComplete: true })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ onboardingAnchor: anchor, onboardingComplete: true }),
     })
-    router.push("/today")
+
+    if (res.ok) {
+      // Force the JWT cookie to refresh with the new onboardingComplete
+      // value — without this, middleware still sees the stale token
+      // and bounces the redirect straight back to /onboarding.
+      await update({ onboardingComplete: true })
+      router.push("/today")
+    } else {
+      setSaving(false)
+      // TODO: surface an error state to the user
+    }
   }
 
   return (

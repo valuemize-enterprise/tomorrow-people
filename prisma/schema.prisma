@@ -11,35 +11,26 @@ datasource db {
 // ─── NextAuth models ──────────────────────────────────────────────
 
 model User {
-  id    String  @id @default(cuid())
-  email String  @unique
-  name  String?
-  image String?
-
-  onboardingAnchor   String?
-  onboardingComplete Boolean @default(false)
-  identityStatement  String?
-  timezone           String  @default("UTC")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // NextAuth
-  accounts Account[]
-  sessions Session[]
-
-  // App relations
-  habits           Habit[]
-  dailyLogs        DailyLog[]
-  accountabilities Accountability[] @relation("UserAccountabilities")
-  partnerships     Accountability[] @relation("PartnerAccountabilities")
-  coachingMessages CoachingMessage[]
-
-  // ← FIX: these two were missing from original schema
-  dailyScores    DailyScore[]
-  journalEntries JournalEntry[]
-
-  @@map("users")
+  id                String    @id @default(cuid())
+  name              String?
+  email             String?   @unique
+  emailVerified     DateTime?
+  image             String?
+  onboardingAnchor      String?
+  onboardingComplete    Boolean   @default(false)
+  identityStatement     String?
+  timezone              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  accounts          Account[]
+  sessions          Session[]
+  habits            Habit[]
+  dailyLogs         DailyLog[]
+  accountabilities  Accountability[] @relation("UserAccountabilities")
+  partnerships      Accountability[] @relation("PartnerAccountabilities")
+  coachingMessages  CoachingMessage[]
+  dailyScores       DailyScore[]
+  journalEntries    JournalEntry[]
 }
 
 model Account {

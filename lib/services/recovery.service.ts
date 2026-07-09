@@ -46,7 +46,6 @@ export async function getRecoveryState(
 
   const habits = await prisma.habit.findMany({
     where: { userId, isActive: true },
-    include: { streak: true },
     select: {
       id: true,
       name: true,

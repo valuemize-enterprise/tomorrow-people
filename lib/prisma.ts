@@ -37,7 +37,6 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma
 
   // Log slow queries (>500ms) in development
-  // @ts-expect-error — event types vary by version
   prisma.$on("query", (e: { duration: number; query: string }) => {
     if (e.duration > 500) {
       console.warn(`[prisma] Slow query (${e.duration}ms): ${e.query.slice(0, 120)}`)

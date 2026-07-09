@@ -23,3 +23,10 @@ declare module "next-auth" {
     identityStatement: string | null
   }
 }
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string
+    onboardingComplete: boolean
+    identityStatement: string | null
+  }
+}

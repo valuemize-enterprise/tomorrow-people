@@ -37,7 +37,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 
-  // Database sessions (not JWT) are the default when an adapter is set.
-  // This means session data lives in the DB and session tokens are opaque.
-  // session: { strategy: "database" },  ← this is the implicit default
+  // NOTE: authConfig explicitly sets session strategy to "jwt" (see
+// auth.config.ts). This overrides the database-session default that
+// would otherwise apply since an adapter is present. JWT was chosen
+// so middleware (Edge runtime, no Prisma access) can verify sessions
+// without a DB round-trip. The adapter is still used for account
+// linking, user lookup, and the `user` object passed into the jwt()
+// callback on sign-in.
 })
