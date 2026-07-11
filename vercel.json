@@ -7,8 +7,6 @@
   "installCommand": "npm ci",
   "outputDirectory": ".next",
 
-  "nodeVersion": "20.x",
-
   "crons": [
     {
       "path":     "/api/cron/midnight",
