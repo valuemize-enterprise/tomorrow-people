@@ -10,16 +10,19 @@
   "crons": [
     {
       "path":     "/api/cron/midnight",
-      "schedule": "1 0 * * *"
+      "schedule": "1 23 * * *"
     },
     {
       "path":     "/api/cron/weekly",
-      "schedule": "0 6 * * 6"
+      "schedule": "0 5 * * 6"
     }
   ],
 
   "functions": {
-    "app/api/cron/**": {
+    "app/api/cron/midnight/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/cron/weekly/route.ts": {
       "maxDuration": 300
     },
     "app/api/**": {
