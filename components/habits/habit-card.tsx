@@ -103,7 +103,7 @@ export function HabitCard({ habit, log, onLog, index = 0, showFirstUseHint = fal
                   fontSize:   "15px",
                   fontWeight: "600",
                   color:      voteAnim ? "var(--a)" : "var(--ink2)",
-                  tabularNums: "true",
+                  fontVariantNumeric: "tabular-nums",
                 }}
               >
                 {localStreak?.current ?? 0}
