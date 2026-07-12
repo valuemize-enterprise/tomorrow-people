@@ -22,12 +22,12 @@ export const prisma =
   new PrismaClient({
     log:
       process.env.NODE_ENV === "development"
-        ? [
+        ? ([
             { level: "query", emit: "event" },
             { level: "error", emit: "stdout" },
             { level: "warn",  emit: "stdout" },
-          ]
-        : [{ level: "error", emit: "stdout" }],
+          ] as const)
+        : ([{ level: "error", emit: "stdout" }] as const),
   })
 
 // Alias — use whichever reads better in context
