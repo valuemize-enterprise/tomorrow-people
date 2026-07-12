@@ -32,7 +32,7 @@ export const POST = withAuth(async (_req: NextRequest, { userId }) => {
   // Stream Claude's response directly to the client
   const stream = await streamReflectionFeedback(ctx)
 
-  return new Response(stream, {
+  return new NextResponse(stream, {
     headers: {
       "Content-Type":      "text/event-stream",
       "Cache-Control":     "no-cache",
