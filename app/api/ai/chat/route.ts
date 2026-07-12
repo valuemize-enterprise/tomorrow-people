@@ -74,12 +74,12 @@ export const POST = withAuth(async (req: NextRequest, { userId }) => {
     return NextResponse.json({ error: message }, { status: 503 })
   }
 
-  return new Response(stream, {
-    headers: {
-      "Content-Type":           "text/event-stream",
-      "Cache-Control":          "no-cache, no-store",
-      "X-Accel-Buffering":      "no",
-      "X-Content-Type-Options": "nosniff",
-    },
-  })
+  return new NextResponse(stream, {
+  headers: {
+    "Content-Type":           "text/event-stream",
+    "Cache-Control":          "no-cache, no-store",
+    "X-Accel-Buffering":      "no",
+    "X-Content-Type-Options": "nosniff",
+  },
+})
 })
