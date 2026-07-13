@@ -1,24 +1,8 @@
-/**
- * lib/prisma.ts
- *
- * Singleton Prisma Client.
- *
- * Changes from dev version:
- *   1. Imports env validation so a bad deploy throws at cold start
- *   2. Adds connection timeout and query logging only in development
- *   3. Exports a typed db alias for ergonomics
- */
-
-import "@/config/env"   // ← throws immediately if any env var is missing
+import "@/config/env"
 
 import { PrismaClient } from "@prisma/client"
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
-}
-
-export const prisma =
-  globalForPrisma.prisma ??
+const createPrismaClient = () =>
   new PrismaClient({
     log: [
       { level: "query", emit: "event" },
@@ -26,6 +10,12 @@ export const prisma =
       { level: "warn",  emit: "stdout" },
     ] as const,
   })
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: ReturnType<typeof createPrismaClient> | undefined
+}
+
+export const prisma = globalForPrisma.prisma ?? createPrismaClient()
 
 export const db = prisma
 
