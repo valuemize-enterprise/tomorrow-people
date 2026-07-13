@@ -24,7 +24,7 @@ type CoachingType =
 async function getCached(
   userId: string,
   type:   CoachingType,
-  habitId?: string | null,    // FIX: explicitly typed as null, not ""
+  habitId?: string | null,
 ): Promise<string | null> {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -33,7 +33,7 @@ async function getCached(
     where: {
       userId,
       type,
-      habitId: habitId ?? null,  // FIX: was habitId ?? ""
+      habitId: habitId ?? null,
       date:    today,
     },
     select: { message: true },
@@ -50,22 +50,43 @@ async function setCached(
 ): Promise<void> {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+  const normalizedHabitId = habitId ?? null
 
   try {
-    await prisma.coachingMessage.upsert({
-      where: {
-        userId_type_date_habitId: {
-          userId,
-          type,
-          date:    today,
-          habitId: habitId ?? null,   // FIX: null, not ""
+    if (normalizedHabitId) {
+      // Safe to use compound-unique upsert — habitId is a real string
+      await prisma.coachingMessage.upsert({
+        where: {
+          userId_type_date_habitId: {
+            userId,
+            type,
+            date: today,
+            habitId: normalizedHabitId,
+          },
         },
-      },
-      update: { message },
-      create: { userId, type, date: today, message, habitId: habitId ?? null },
-    })
+        update: { message },
+        create: { userId, type, date: today, message, habitId: normalizedHabitId },
+      })
+    } else {
+      // habitId is null — compound unique lookup doesn't support null,
+      // so fall back to findFirst + create/update
+      const existing = await prisma.coachingMessage.findFirst({
+        where: { userId, type, date: today, habitId: null },
+        select: { id: true },
+      })
+
+      if (existing) {
+        await prisma.coachingMessage.update({
+          where: { id: existing.id },
+          data: { message },
+        })
+      } else {
+        await prisma.coachingMessage.create({
+          data: { userId, type, date: today, message, habitId: null },
+        })
+      }
+    }
   } catch (err) {
-    // Cache failure is non-fatal — log it and continue
     console.error("[coaching] Cache write failed (non-fatal):", err)
   }
 }
