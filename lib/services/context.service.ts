@@ -132,7 +132,7 @@ export async function enrichWithJournal(
     journalEntry: {
       promptText: entry.promptText,
       body:       entry.body,
-      mood:       (entry.mood as CoachingContext["journalEntry"]["mood"]) ?? null,
+      mood:       entry.mood,
     },
   }
 }
