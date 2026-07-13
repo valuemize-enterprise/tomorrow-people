@@ -132,7 +132,7 @@ export async function enrichWithJournal(
     journalEntry: {
       promptText: entry.promptText,
       body:       entry.body,
-      mood:       entry.mood,
+      mood:       entry.mood as "great" | "good" | "neutral" | "hard" | "rough" | null,
     },
   }
 }
