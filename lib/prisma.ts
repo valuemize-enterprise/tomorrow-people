@@ -20,26 +20,23 @@ const globalForPrisma = globalThis as unknown as {
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log:
-      process.env.NODE_ENV === "development"
-        ? ([
-            { level: "query", emit: "event" },
-            { level: "error", emit: "stdout" },
-            { level: "warn",  emit: "stdout" },
-          ] as const)
-        : ([{ level: "error", emit: "stdout" }] as const),
+    log: [
+      { level: "query", emit: "event" },
+      { level: "error", emit: "stdout" },
+      { level: "warn",  emit: "stdout" },
+    ] as const,
   })
 
-// Alias — use whichever reads better in context
 export const db = prisma
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma
 
-  // Log slow queries (>500ms) in development
-  prisma.$on("query", (e: { duration: number; query: string }) => {
-    if (e.duration > 500) {
-      console.warn(`[prisma] Slow query (${e.duration}ms): ${e.query.slice(0, 120)}`)
-    }
-  })
+  if (process.env.NODE_ENV === "development") {
+    prisma.$on("query", (e: { duration: number; query: string }) => {
+      if (e.duration > 500) {
+        console.warn(`[prisma] Slow query (${e.duration}ms): ${e.query.slice(0, 120)}`)
+      }
+    })
+  }
 }
