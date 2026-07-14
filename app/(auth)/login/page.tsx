@@ -1,10 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { signIn } from "next-auth/react"
 import { useSearchParams } from "next/navigation"
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const [email,   setEmail]   = useState("")
   const [loading, setLoading] = useState<"google" | "email" | null>(null)
   const [sent,    setSent]    = useState(false)
@@ -19,18 +27,17 @@ export default function LoginPage() {
   }
 
   async function handleMagicLink(e: React.FormEvent) {
-  e.preventDefault()
-  if (!email.trim()) return
-  setLoading("email")
-  const result = await signIn("email", {
-    email,
-    redirect: false,
-    callbackUrl: "/today",
-  })
-  setLoading(null)
-  if (result?.ok) setSent(true)
-}
-
+    e.preventDefault()
+    if (!email.trim()) return
+    setLoading("email")
+    const result = await signIn("email", {
+      email,
+      redirect: false,
+      callbackUrl: "/today",
+    })
+    setLoading(null)
+    if (result?.ok) setSent(true)
+  }
 
   // ── Sent screen ──────────────────────────────────────────────────
 
@@ -133,6 +140,14 @@ export default function LoginPage() {
         </p>
 
       </div>
+    </div>
+  )
+}
+
+function LoginFallback() {
+  return (
+    <div className="min-h-dvh bg-[var(--surface-0)] flex items-center justify-center px-4">
+      <Spinner />
     </div>
   )
 }
