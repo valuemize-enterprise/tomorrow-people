@@ -193,7 +193,7 @@ async function main() {
         current,
         longest:          current,
         totalVotes:       completions,
-        lastCompletedDate: lastLog?.date ?? null,
+        //lastCompletedDate: lastLog?.date ?? null,
         lastUpdated:       new Date(),
       },
     })
